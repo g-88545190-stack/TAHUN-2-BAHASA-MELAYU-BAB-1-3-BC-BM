@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>马来文生字大冒险 - 二年级60词闯关记</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Noto+Sans+SC:wght@500;700;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Fredoka', 'Noto Sans SC', sans-serif;
+      background: linear-gradient(135deg, #FFF7ED 0%, #FEF3C7 45%, #E0F2FE 100%);
+      min-height: 100vh;
+      user-select: none;
+      overflow-x: hidden;
+    }
+
+    @keyframes bounceIn {
+      0% { transform: scale(0.3); opacity: 0; }
+      50% { transform: scale(1.06); opacity: 1; }
+      70% { transform: scale(0.95); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+
+    @keyframes pulseFast {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.12); }
+    }
+
+    .animate-bounce-in {
+      animation: bounceIn 0.45s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
+    }
+
+    .animate-shake {
+      animation: shake 0.4s ease-in-out;
+    }
+
+    .animate-float {
+      animation: floatSlow 3s ease-in-out infinite;
+    }
+
+    .animate-pulse-fast {
+      animation: pulseFast 0.6s ease-in-out infinite;
+    }
+
+    .btn-3d {
+      transition: all 0.12s ease;
+      box-shadow: 0 5px 0 rgba(0, 0, 0, 0.16);
+    }
+    .btn-3d:active:not(:disabled) {
+      transform: translateY(4px);
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.16);
+    }
+
+    /* 自定义滚动条（用于提示选词列表与百宝箱） */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #FBBF24;
+      border-radius: 999px;
+    }
+  </style>
+</head>
+<body class="text-slate-800 flex flex-col items-center justify-between p-3 sm:p-5">
+
+  <!-- 顶部游戏状态栏（开始游戏后显示） -->
+  <header id="gameHeader" class="hidden w-full max-w-4xl bg-white/90 backdrop-blur-md rounded-3xl p-3 sm:p-4 shadow-lg border-4 border-amber-300 mb-3">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <!-- 关卡指示 -->
+      <div class="flex items-center gap-2">
+        <span class="bg-gradient-to-r from-amber-400 to-orange-500 text-white font-black px-3.5 py-1.5 rounded-2xl text-sm sm:text-base shadow">
+          🚩 第 <span id="levelNum">1</span> / 6 关
+        </span>
+        <span class="bg-sky-100 text-sky-800 font-bold px-3 py-1.5 rounded-2xl text-xs sm:text-sm border border-sky-200">
+          本关进度: <span id="levelProgressText">0</span> / 10
+        </span>
+      </div>
+
+      <!-- 6条共用爱心生命 -->
+      <div class="flex items-center gap-1 bg-rose-50 px-3 py-1.5 rounded-2xl border-2 border-rose-200" title="6关共用6条爱心生命">
+        <span class="text-xs font-bold text-rose-600 mr-1 hidden sm:inline">生命:</span>
+        <div id="heartsContainer" class="flex items-center gap-0.5 text-lg sm:text-xl">
+          <!-- 动态生成 6 颗心 -->
+        </div>
+      </div>
+
+      <!-- 连胜进度槽 (5连胜触发魔法提示) & 音乐开关 -->
+      <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5 bg-purple-50 px-3 py-1.5 rounded-2xl border-2 border-purple-200">
+          <span class="text-base">🔥</span>
+          <span class="text-xs sm:text-sm font-extrabold text-purple-700">
+            连对: <span id="streakNum" class="text-base text-purple-900">0</span>/5
+          </span>
+          <div class="flex gap-1 ml-1" id="streakDots">
+            <span class="w-2.5 h-2.5 rounded-full bg-purple-200"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-purple-200"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-purple-200"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-purple-200"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-purple-200"></span>
+          </div>
+        </div>
+
+        <!-- 背景音乐一键开关 -->
+        <button id="bgmToggleBtn" onclick="toggleBgm()" title="开启/关闭冒险背景音乐" class="btn-3d bg-amber-100 hover:bg-amber-200 text-amber-800 border-2 border-amber-300 px-3 py-1.5 rounded-2xl text-sm sm:text-base font-black cursor-pointer flex items-center gap-1">
+          <span id="bgmIcon">🎵</span>
+          <span id="bgmLabel" class="hidden md:inline text-xs">音乐开</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 6关小地图进度条 -->
+    <div class="grid grid-cols-6 gap-1.5 mt-3">
+      <div id="stageBadge1" class="h-2.5 rounded-full bg-amber-400 transition-all"></div>
+      <div id="stageBadge2" class="h-2.5 rounded-full bg-slate-200 transition-all"></div>
+      <div id="stageBadge3" class="h-2.5 rounded-full bg-slate-200 transition-all"></div>
+      <div id="stageBadge4" class="h-2.5 rounded-full bg-slate-200 transition-all"></div>
+      <div id="stageBadge5" class="h-2.5 rounded-full bg-slate-200 transition-all"></div>
+      <div id="stageBadge6" class="h-2.5 rounded-full bg-slate-200 transition-all"></div>
+    </div>
+  </header>
+
+  <!-- 主舞台容器 -->
+  <main class="w-full max-w-4xl flex-1 flex flex-col items-center justify-center">
+
+    <!-- ==================== 1. 开始封面界面 ==================== -->
+    <section id="startScreen" class="w-full bg-white/95 rounded-3xl p-6 sm:p-8 shadow-2xl border-4 border-amber-400 text-center animate-bounce-in">
+      <div class="inline-block bg-amber-100 text-amber-800 font-bold px-4 py-1 rounded-full text-sm mb-3 border border-amber-300">
+        🇲🇾 二年级 Bahasa Melayu 复习大挑战
+      </div>
+      <h1 class="text-3xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-pink-500 to-indigo-600 mb-3 tracking-wide">
+        马来文生字大冒险
+      </h1>
+      <p class="text-slate-600 text-base sm:text-lg font-medium mb-6">
+        全部 <span class="text-orange-600 font-black">60 个生字</span> 变成 6 座神秘关卡，答对赢取美味零食和可爱萌宠！
+      </p>
+
+      <!-- 游戏规则卡片 -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left mb-6">
+        <div class="bg-sky-50 border-2 border-sky-200 rounded-2xl p-3.5 flex items-start gap-3">
+          <span class="text-2xl">🗺️</span>
+          <div>
+            <h3 class="font-bold text-sky-900 text-sm sm:text-base">6 大关卡 · 全部 60 题</h3>
+            <p class="text-xs sm:text-sm text-sky-700">每关随机抽出 10 个生字，闯完 6 关就能复习全部 60 词！</p>
+          </div>
+        </div>
+
+        <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-3.5 flex items-start gap-3">
+          <span class="text-2xl">⏱️</span>
+          <div>
+            <h3 class="font-bold text-amber-900 text-sm sm:text-base">每题限时 12 秒</h3>
+            <p class="text-xs sm:text-sm text-amber-700">看清中文意思，12 秒内选出正确的马来语生字就能赢取小奖励！</p>
+          </div>
+        </div>
+
+        <div class="bg-rose-50 border-2 border-rose-200 rounded-2xl p-3.5 flex items-start gap-3">
+          <span class="text-2xl">❤️❤️❤️❤️❤️❤️</span>
+          <div>
+            <h3 class="font-bold text-rose-900 text-sm sm:text-base">6 条共用爱心生命</h3>
+            <p class="text-xs sm:text-sm text-rose-700">答错或超时扣 1 颗心，生字会延后再考；6 颗心用完需重新挑战！</p>
+          </div>
+        </div>
+
+        <div class="bg-purple-50 border-2 border-purple-200 rounded-2xl p-3.5 flex items-start gap-3">
+          <span class="text-2xl">🪄</span>
+          <div>
+            <h3 class="font-bold text-purple-900 text-sm sm:text-base">连续答对 5 题神灯特权</h3>
+            <p class="text-xs sm:text-sm text-purple-700">连对 5 题可任选 1 个还没考的不熟生字偷看记忆提示！</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 发音引擎检测状态提示 -->
+      <div id="voiceStatusBanner" class="mb-6 text-xs sm:text-sm font-semibold px-4 py-2 rounded-2xl inline-flex items-center gap-2 bg-slate-100 text-slate-600">
+        <span>🔍 正在检测设备 Bahasa Baku 标准发音库...</span>
+      </div>
+
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <button id="startBtn" onclick="startNewGame()" class="btn-3d bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-white font-black text-xl sm:text-2xl px-10 py-4 rounded-3xl shadow-xl cursor-pointer">
+          🚀 开始大冒险！
+        </button>
+        <button onclick="toggleBgm()" class="btn-3d bg-amber-100 hover:bg-amber-200 text-amber-900 border-2 border-amber-300 font-bold text-sm sm:text-base px-5 py-3.5 rounded-3xl cursor-pointer flex items-center gap-1.5">
+          <span id="startBgmIcon">🎵</span>
+          <span id="startBgmText">冒险背景音乐：开启</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ==================== 2. 核心答题界面 ==================== -->
+    <section id="quizScreen" class="hidden w-full flex flex-col gap-3 sm:gap-4">
+      <!-- 答题主卡片 -->
+      <div id="questionCard" class="bg-white/95 rounded-3xl p-5 sm:p-7 shadow-xl border-4 border-sky-300 relative overflow-hidden">
+        
+        <!-- 12秒倒计时条 -->
+        <div class="mb-4">
+          <div class="flex justify-between items-center text-xs sm:text-sm font-extrabold mb-1.5">
+            <span class="text-slate-500">⏳ 思考倒计时</span>
+            <span id="timerText" class="text-emerald-600 text-base sm:text-lg font-black">12.0 秒</span>
+          </div>
+          <div class="w-full h-3.5 bg-slate-200 rounded-full overflow-hidden p-0.5">
+            <div id="timerBar" class="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full transition-all duration-100" style="width: 100%;"></div>
+          </div>
+        </div>
+
+        <!-- 题目编号与重考标记 -->
+        <div class="flex items-center justify-between mb-2">
+          <span id="wordIndexTag" class="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full">
+            生字卡 #1
+          </span>
+          <span id="retryTag" class="hidden bg-orange-100 text-orange-700 text-xs font-extrabold px-3 py-1 rounded-full border border-orange-300">
+            🔄 复习巩固题
+          </span>
+        </div>
+
+        <!-- 华语题目展示区（反向出题：给华语意思，选马来文生字） -->
+        <div class="text-center my-4 sm:my-6 py-4 px-3 bg-gradient-to-b from-sky-50 to-indigo-50/60 rounded-3xl border-2 border-sky-100">
+          <p class="text-xs sm:text-sm font-bold text-sky-600 mb-1">请问下面这个华语意思对应的马来文是哪一个？</p>
+          <h2 id="chinesePromptDisplay" class="text-3xl sm:text-5xl font-black text-slate-900 tracking-wide break-words mb-2">
+            尊敬
+          </h2>
+
+          <!-- 答对后显现的 Bahasa Baku 读音按钮（防止答题前剧透，且仅当设备支持 ms-MY 时显示） -->
+          <div id="correctAudioWrapper" class="hidden justify-center mt-3 animate-bounce-in">
+            <button onclick="speakCurrentWord()" class="btn-3d inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm sm:text-base px-4 py-2 rounded-2xl cursor-pointer">
+              <span>🔊</span>
+              <span>听读音：<span id="correctAudioWordLabel" class="underline">hormat</span></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4个马来文生字选项 -->
+        <div id="optionsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <!-- 动态生成 4 个马来文选项按钮 -->
+        </div>
+
+        <!-- 答错/超时 记忆解释面板 -->
+        <div id="explanationBox" class="hidden mt-5 bg-rose-50 border-3 border-rose-300 rounded-3xl p-4 sm:p-5 animate-bounce-in">
+          <div class="flex items-start gap-3">
+            <div class="text-3xl sm:text-4xl">💡</div>
+            <div class="flex-1">
+              <div class="flex flex-wrap items-center gap-2 mb-1">
+                <span id="wrongStatusBadge" class="bg-rose-500 text-white text-xs font-black px-2.5 py-0.5 rounded-lg">答错啦 (-1 ❤️)</span>
+                <h3 class="font-black text-rose-900 text-base sm:text-lg">
+                  <span id="expChinese" class="underline decoration-wavy decoration-rose-400"></span> = <span id="expMalay" class="text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-lg"></span>
+                </h3>
+                <!-- 答错解析中的 Bahasa Baku 标准发音按钮 -->
+                <button id="expSpeakBtn" onclick="speakCurrentWord()" class="hidden btn-3d inline-flex items-center gap-1 bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold px-3 py-1 rounded-xl cursor-pointer">
+                  <span>🔊</span>
+                  <span>听标准发音</span>
+                </button>
+              </div>
+              <p id="expDetail" class="text-slate-700 text-sm sm:text-base leading-relaxed mt-2 bg-white/80 p-3 rounded-2xl border border-rose-200">
+                记忆小贴士内容
+              </p>
+              <p class="text-xs font-bold text-rose-600 mt-2">
+                📌 别灰心！这个生字已经放回本关后面的题库里，等一下再考考你哦！
+              </p>
+            </div>
+          </div>
+          <div class="mt-4 text-right">
+            <button onclick="proceedAfterWrong()" class="btn-3d bg-rose-500 hover:bg-rose-600 text-white font-black px-6 py-2.5 rounded-2xl text-sm sm:text-base cursor-pointer">
+              记住了，继续下一题 ➡️
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部：我的零食与萌宠奖励百宝箱 -->
+      <div class="bg-white/90 rounded-3xl p-3.5 sm:p-4 shadow-md border-2 border-amber-200">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-xs sm:text-sm font-black text-amber-800 flex items-center gap-1.5">
+            <span>🎒 我的零食与萌宠百宝箱</span>
+            <span class="bg-amber-400 text-white text-xs px-2 py-0.5 rounded-full" id="rewardCountBadge">0 个</span>
+          </h3>
+          <span class="text-xs text-slate-500 font-semibold">全对总进度: <span id="totalMasteredText">0</span> / 60</span>
+        </div>
+        <div id="rewardBag" class="flex items-center gap-2 overflow-x-auto py-1 min-h-[44px]">
+          <span class="text-xs text-slate-400 italic">答对第一题就能获得美味小零食或可爱表情奖励哦！✨</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 3. 单关通关庆祝界面 ==================== -->
+    <section id="levelCompleteScreen" class="hidden w-full bg-white/95 rounded-3xl p-6 sm:p-8 shadow-2xl border-4 border-emerald-400 text-center animate-bounce-in">
+      <div class="text-6xl mb-3 animate-float">🏆</div>
+      <h2 class="text-2xl sm:text-4xl font-black text-emerald-600 mb-2">
+        太棒啦！第 <span id="completedLevelNum">1</span> 关通关成功！
+      </h2>
+      <p class="text-slate-600 text-base sm:text-lg mb-5">
+        你已经成功掌握了 <span id="totalSolvedSoFar" class="font-black text-orange-500">10</span> / 60 个马来文生字！
+      </p>
+
+      <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 mb-6 inline-block">
+        <p class="text-sm font-bold text-amber-800 mb-1">当前剩余爱心生命</p>
+        <div id="levelClearHearts" class="text-2xl">❤️❤️❤️❤️❤️❤️</div>
+      </div>
+
+      <div>
+        <button onclick="startNextLevel()" class="btn-3d bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-black text-lg sm:text-xl px-8 py-4 rounded-3xl shadow-lg cursor-pointer">
+          🚀 进入第 <span id="nextLevelBtnNum">2</span> 关！
+        </button>
+      </div>
+    </section>
+
+    <!-- ==================== 4. 生命耗尽 (Game Over) 界面 ==================== -->
+    <section id="gameOverScreen" class="hidden w-full bg-white/95 rounded-3xl p-6 sm:p-8 shadow-2xl border-4 border-rose-400 text-center animate-bounce-in">
+      <div class="text-6xl mb-3">💔</div>
+      <h2 class="text-2xl sm:text-4xl font-black text-rose-600 mb-2">
+        哎呀，6 条爱心生命用完啦！
+      </h2>
+      <p class="text-slate-600 text-base sm:text-lg mb-4">
+        别气馁！学习马来文生字多复习几遍就会越来越厉害！
+      </p>
+      <div class="bg-rose-50 border-2 border-rose-200 rounded-2xl p-4 mb-6 max-w-md mx-auto">
+        <p class="text-sm font-bold text-rose-800">
+          本次闯关成绩：到达 <span class="font-black">第 <span id="failLevelNum">1</span> 关</span>，答对了 <span class="font-black text-emerald-600"><span id="failSolvedCount">0</span> / 60</span> 个生字，收集了 <span class="font-black text-amber-600"><span id="failRewardCount">0</span></span> 个小奖励！
+        </p>
+      </div>
+      <button onclick="startNewGame()" class="btn-3d bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-black text-lg sm:text-xl px-8 py-4 rounded-3xl shadow-lg cursor-pointer">
+        🔄 恢复 6 颗心，重新挑战！
+      </button>
+    </section>
+
+    <!-- ==================== 5. 全部 6 关 60 题终极通关界面 ==================== -->
+    <section id="victoryScreen" class="hidden w-full bg-white/95 rounded-3xl p-6 sm:p-8 shadow-2xl border-4 border-yellow-400 text-center animate-bounce-in">
+      <div class="text-6xl sm:text-7xl mb-3 animate-float">👑🎉</div>
+      <h2 class="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-orange-500 to-pink-600 mb-2">
+        恭喜通关！全部 60 题制霸！
+      </h2>
+      <p class="text-slate-600 text-base sm:text-lg font-medium mb-5">
+        你真是个超级厉害的二年级马来文小达人！60 个生字全部复习完毕！
+      </p>
+
+      <div class="bg-amber-50 border-2 border-amber-300 rounded-3xl p-4 mb-6 max-w-xl mx-auto">
+        <h3 class="font-black text-amber-900 mb-2">🎁 你的全部通关宝藏与零食 (共 <span id="finalRewardCount">60</span> 个)：</h3>
+        <div id="finalRewardShowcase" class="flex flex-wrap justify-center gap-2 max-h-40 overflow-y-auto p-2">
+          <!-- 展示所有收集到的奖励 -->
+        </div>
+      </div>
+
+      <button onclick="startNewGame()" class="btn-3d bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-white font-black text-lg sm:text-xl px-8 py-4 rounded-3xl shadow-lg cursor-pointer">
+        🔁 再玩一次（重新随机洗牌）
+      </button>
+    </section>
+
+  </main>
+
+  <!-- ==================== 弹窗 A：答对小奖励飘窗 ==================== -->
+  <div id="rewardToast" class="fixed top-20 left-1/2 -translate-x-1/2 z-40 pointer-events-none hidden">
+    <div class="bg-gradient-to-r from-amber-400 via-orange-400 to-pink-500 text-white px-6 py-3 rounded-full shadow-2xl border-4 border-white flex items-center gap-3 animate-bounce-in">
+      <span id="toastEmoji" class="text-3xl sm:text-4xl">🍩</span>
+      <div class="text-left">
+        <p class="text-xs font-bold uppercase tracking-wider text-yellow-100">答对啦！获得小奖励</p>
+        <p id="toastName" class="text-base sm:text-lg font-black">草莓甜甜圈 +1</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 弹窗 B：连续答对 5 题【魔法提示特权】模态框 ==================== -->
+  <div id="streakBonusModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-5">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-6 border-4 border-purple-400 shadow-2xl animate-bounce-in max-h-[90vh] flex flex-col">
+      <div class="text-center mb-3">
+        <span class="inline-block bg-purple-100 text-purple-800 font-black px-3 py-1 rounded-full text-xs sm:text-sm mb-1">
+          🔥 连续答对 5 题超级奖励！
+        </span>
+        <h2 class="text-xl sm:text-2xl font-black text-purple-900">
+          🪄 魔法神灯提示特权
+        </h2>
+        <p id="bonusSubtitle" class="text-xs sm:text-sm text-slate-600 mt-1">
+          请从下面<b>还没考过的生字</b>中，挑 <b>1 个</b>你不太熟悉的字，神灯会悄悄告诉你它的意思和记忆口诀！
+        </p>
+      </div>
+
+      <!-- 步骤 1：未回答生字选择网格 -->
+      <div id="unansweredPickerGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-2 overflow-y-auto p-2 bg-purple-50/70 rounded-2xl border-2 border-purple-100 flex-1 min-h-[180px]">
+        <!-- 动态填入还未回答的华语意思 -->
+      </div>
+
+      <!-- 步骤 2：选中生字后的提示揭晓区 -->
+      <div id="hintRevealCard" class="hidden bg-gradient-to-br from-amber-50 to-purple-50 border-3 border-amber-300 rounded-2xl p-4 sm:p-5 my-2 text-center animate-bounce-in">
+        <p class="text-xs font-bold text-purple-600 mb-1">✨ 神灯偷偷告诉你：</p>
+        <h3 id="hintChineseTitle" class="text-xl sm:text-2xl font-black text-slate-700 mb-1">动作敏捷</h3>
+        <div class="inline-flex flex-wrap items-center justify-center gap-2 bg-emerald-500 text-white font-black text-xl sm:text-2xl px-4 py-1.5 rounded-xl mb-3">
+          <span>马来文：<span id="hintMalayAnswer">seperti lipas kudung</span></span>
+        </div>
+        <div id="hintSpeakWrapper" class="hidden justify-center mb-3">
+          <button id="hintSpeakBtn" onclick="speakHintWord()" class="btn-3d inline-flex items-center gap-1.5 bg-sky-500 hover:bg-sky-600 text-white text-xs sm:text-sm font-bold px-3.5 py-1.5 rounded-xl cursor-pointer">
+            <span>🔊</span>
+            <span>听标准发音 (Bahasa Baku)</span>
+          </button>
+        </div>
+        <p id="hintMemoryTip" class="text-sm sm:text-base text-slate-700 bg-white p-3 rounded-xl border border-amber-200 text-left leading-relaxed">
+          记忆口诀...
+        </p>
+        <p class="text-xs font-bold text-indigo-600 mt-3">
+          🛡️ 放心！这个生字已经往后排开，不会在关闭提示后马上出现，让你有时间慢慢消化！
+        </p>
+      </div>
+
+      <div class="mt-4 flex justify-center">
+        <button id="closeBonusBtn" onclick="closeStreakBonusModal()" class="hidden btn-3d bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-black px-8 py-3 rounded-2xl text-base cursor-pointer">
+          记好啦，继续闯关！🚀
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. 完整 60 个二年级马来文生字库（与笔记本 1~60 号完全一致）
+    // =========================================================================
+    const VOCAB_DATA = [
+      { id: 1, malay: "hormat", chinese: "尊敬", tip: "见到老师和长辈要行礼问好，这就是 hormat（尊敬）！" },
+      { id: 2, malay: "prihatin", chinese: "关心", tip: "看到同学跌倒主动扶起来，说明你很 prihatin（关心）别人。" },
+      { id: 3, malay: "tersenyum", chinese: "微笑", tip: "嘴角轻轻往上翘，露出开心的表情就是 tersenyum（微笑）。" },
+      { id: 4, malay: "bagasi", chinese: "行李", tip: "去旅行时拖着的拉杆箱和大包包，叫做 bagasi（行李）。" },
+      { id: 5, malay: "langsir", chinese: "窗帘", tip: "挂在窗户上用来遮挡阳光的布，叫做 langsir（窗帘）。" },
+      { id: 6, malay: "berbual", chinese: "聊天", tip: "好朋友坐在一起开心地你一言我一语说话，就是 berbual（聊天）。" },
+      { id: 7, malay: "akuarium", chinese: "鱼缸", tip: "里面装着水、水草和小金鱼的玻璃箱，叫做 akuarium（鱼缸）。" },
+      { id: 8, malay: "membuat persiapan", chinese: "做准备", tip: "派对开始前先打扫、摆好桌椅，这就是 membuat persiapan（做准备）。" },
+      { id: 9, malay: "mengangkat barang", chinese: "抬东西", tip: "mengangkat 是抬起，barang 是物品，合起来就是“抬东西”。" },
+      { id: 10, malay: "mengemas pakaian", chinese: "收拾衣服", tip: "mengemas 是整理收拾，pakaian 是衣服，合起来就是“收拾衣服”。" },
+      { id: 11, malay: "kereta api", chinese: "火车", tip: "kereta 是车，api 是火，在铁轨上呜呜跑的“火车”就是 kereta api！" },
+      { id: 12, malay: "menyediakan makanan", chinese: "准备食物", tip: "妈妈在厨房把饭菜煮好端出来，就是 menyediakan makanan（准备食物）。" },
+      { id: 13, malay: "hidangan", chinese: "食物", tip: "摆在餐桌上准备享用的美味菜肴和点心，统称为 hidangan（食物）。" },
+      { id: 14, malay: "loceng", chinese: "钟，铃", tip: "下课时“叮铃铃”响起的声音，就是学校里的 loceng（钟，铃）。" },
+      { id: 15, malay: "makanan laut", chinese: "海鲜", tip: "makanan 是食物，laut 是大海，来自大海的鱼虾螃蟹就是“海鲜”。" },
+      { id: 16, malay: "kenangan", chinese: "回忆，纪念", tip: "留在脑海里甜甜的往事，或者旅行拍下的纪念照，都叫 kenangan（回忆，纪念）。" },
+      { id: 17, malay: "tokong", chinese: "寺庙", tip: "华人烧香祈福、有红色柱子和屋檐的传统庙宇，叫做 tokong（寺庙）。" },
+      { id: 18, malay: "bersiap", chinese: "准备好", tip: "穿好校服、背好书包准备出门啦，这就是 bersiap（准备好）。" },
+      { id: 19, malay: "sesak", chinese: "拥挤", tip: "假期时商场里人山人海、马路上车水马龙，非常 sesak（拥挤）。" },
+      { id: 20, malay: "menuju", chinese: "朝，向", tip: "巴士朝着目的地前进，“朝，向”某个方向去就是 menuju。" },
+      { id: 21, malay: "bergerak", chinese: "移动", tip: "原本停着的车子开始往前开动了，这就是 bergerak（移动）。" },
+      { id: 22, malay: "jeti", chinese: "码头", tip: "搭渡轮（feri）或小船时上船和下船的岸边平台，叫做 jeti（码头）。" },
+      { id: 23, malay: "suasana", chinese: "气氛，环境", tip: "新年时家里热闹欢腾的感觉，或者公园里清新的环境，都叫 suasana（气氛，环境）。" },
+      { id: 24, malay: "mendaftar masuk", chinese: "注册，登记", tip: "住酒店或去医院看病前，先到柜台写名字报到，就是 mendaftar masuk（注册，登记）。" },
+      { id: 25, malay: "melayan", chinese: "招待", tip: "客人来家里做客，热情地端茶送点心，这就是 melayan（招待）。" },
+      { id: 26, malay: "saudara-mara", chinese: "亲戚", tip: "叔叔、阿姨、舅舅、表哥表姐等所有的家族成员，统称为 saudara-mara（亲戚）。" },
+      { id: 27, malay: "sepupu", chinese: "堂（表）兄弟姐妹", tip: "伯伯、叔叔、姑姑或阿姨家的孩子，就是你的 sepupu（堂/表兄弟姐妹）。" },
+      { id: 28, malay: "majlis perkahwinan", chinese: "婚宴", tip: "majlis 是宴会，perkahwinan 是结婚，合起来就是热闹喜庆的“婚宴”！" },
+      { id: 29, malay: "mak cik", chinese: "阿姨，姑姑", tip: "平时见到的女性长辈，或妈妈的姐妹、爸爸的姐妹，都可以亲切地叫 mak cik（阿姨，姑姑）。" },
+      { id: 30, malay: "bersila", chinese: "盘膝而坐", tip: "双腿交叉叠在一起坐在草席或地毯上，这个姿势叫做 bersila（盘膝而坐）。" },
+      { id: 31, malay: "album", chinese: "相册", tip: "把一家人开心合照一页一页收在里面的本子，叫做 album（相册）。" },
+      { id: 32, malay: "pengantin", chinese: "新郎，新娘", tip: "婚礼上穿着最漂亮礼服的那对主角，就是 pengantin（新郎，新娘）。" },
+      { id: 33, malay: "ibu saudara", chinese: "阿姨，姑姑", tip: "ibu 是妈妈，saudara 是亲戚，跟妈妈同辈的女性亲戚就是“阿姨，姑姑”。" },
+      { id: 34, malay: "disimpan", chinese: "被收藏", tip: "词根 simpan 是收起来，加上 di- 变成被动词，意思是“被收藏”好。" },
+      { id: 35, malay: "bekerja", chinese: "工作", tip: "爸爸妈妈每天去公司或学校上班赚钱，这就是 bekerja（工作）。" },
+      { id: 36, malay: "seperti lipas kudung", chinese: "动作敏捷", tip: "成语（Simpulan Bahasa）：像断了脚的蟑螂一样跑得飞快，形容一个人做事“动作敏捷”！" },
+      { id: 37, malay: "ringan tulang", chinese: "勤快", tip: "成语：骨头很轻，一叫就动，一点也不懒惰，形容一个人非常“勤快”！" },
+      { id: 38, malay: "tengah hari", chinese: "中午", tip: "tengah 是中间，hari 是白天，一天的正中间太阳高高挂的时候就是“中午”。" },
+      { id: 39, malay: "jejak langkah", chinese: "追随，模仿别人", tip: "成语：踩着别人的脚印走，意思是向榜样学习、“追随，模仿别人”。" },
+      { id: 40, malay: "dusun", chinese: "果园", tip: "种满榴梿、红毛丹和山竹树的地方，就是好玩的 dusun（果园）！" },
+      { id: 41, malay: "bandar", chinese: "城市", tip: "有很多高楼大厦、购物中心和宽阔马路的地方，叫做 bandar（城市）。" },
+      { id: 42, malay: "menggantung", chinese: "挂", tip: "把灯笼、相框或衣服挂在墙上和衣架上，这个动作叫做 menggantung（挂）。" },
+      { id: 43, malay: "berkelah", chinese: "野餐", tip: "周末一家人带着三明治和水果去海边或瀑布边铺席子吃东西，就是 berkelah（野餐）。" },
+      { id: 44, malay: "berkawan", chinese: "成为朋友", tip: "kawan 是朋友，加上 ber- 变成动词，意思是和大家一起玩、“成为朋友”。" },
+      { id: 45, malay: "selamat datang", chinese: "欢迎光临", tip: "客人走进店里或来到家里时，我们笑着说 selamat datang，就是“欢迎光临”！" },
+      { id: 46, malay: "menjadi", chinese: "成为", tip: "长大后我想“成为”一名医生或老师，这个“成为”就是 menjadi。" },
+      { id: 47, malay: "berpindah", chinese: "搬迁", tip: "从旧房子搬到新房子去住，或者转去新学校，叫做 berpindah（搬迁）。" },
+      { id: 48, malay: "bekas air", chinese: "水壶", tip: "bekas 是容器，air 是水，每天带去学校装白开水的瓶子就是 bekas air（水壶）。" },
+      { id: 49, malay: "ditemukan", chinese: "被发现", tip: "弄丢的铅笔盒终于在桌子底下找到了，这就是 ditemukan（被发现）。" },
+      { id: 50, malay: "hilang", chinese: "消失，不见", tip: "橡皮擦找不到了、太阳公公躲进云里不见了，都叫做 hilang（消失，不见）。" },
+      { id: 51, malay: "buku skrap", chinese: "剪贴簿", tip: "buku 是书，skrap 来自剪贴，把图片和资料剪下来贴进本子做功课，就是 buku skrap（剪贴簿）。" },
+      { id: 52, malay: "mengucapkan", chinese: "说出", tip: "向老师“说出”谢谢（terima kasih）或祝福的话，叫做 mengucapkan。" },
+      { id: 53, malay: "menampalkan", chinese: "粘贴", tip: "用胶水把贴纸或照片稳稳地贴在纸上，这个动作叫做 menampalkan（粘贴）。" },
+      { id: 54, malay: "kalau", chinese: "如果", tip: "“如果”明天下雨，我们就不去公园了——这个“如果”就是 kalau。" },
+      { id: 55, malay: "kesusahan", chinese: "困难", tip: "词根 susah 是难，加上前后缀变成名词 kesusahan，意思是遇到的“困难”。" },
+      { id: 56, malay: "hubungan erat", chinese: "关系紧密", tip: "hubungan 是关系，erat 是紧紧的，形容家人或好朋友之间“关系紧密”、感情很好！" },
+      { id: 57, malay: "hulurkan", chinese: "伸出", tip: "把双手“伸出”去接过长辈给的红包，或者伸出援手帮助别人，叫做 hulurkan。" },
+      { id: 58, malay: "merdu", chinese: "悦耳", tip: "小鸟唱歌或姐姐弹钢琴的声音非常动听，就用 merdu（悦耳）来形容！" },
+      { id: 59, malay: "mengajar", chinese: "教导", tip: "老师在黑板前耐心地教我们读书写字，这就是 mengajar（教导）。" },
+      { id: 60, malay: "terhibur", chinese: "娱乐", tip: "看了搞笑的小丑表演或听了有趣的笑话觉得很开心、得到放松，就是 terhibur（娱乐）。" }
+    ];
+
+    // =========================================================================
+    // 2. 答对小奖励池（小朋友最爱的小零食 + 可爱/搞笑 Emoji）
+    // =========================================================================
+    const MINI_REWARDS = [
+      { emoji: "🍩", name: "草莓甜甜圈" },
+      { emoji: "🍦", name: "香草冰淇淋" },
+      { emoji: "🍪", name: "巧克力曲奇" },
+      { emoji: "🍓", name: "甜蜜大草莓" },
+      { emoji: "🧁", name: "彩虹纸杯蛋糕" },
+      { emoji: "🍉", name: "冰镇大西瓜" },
+      { emoji: "🍫", name: "牛奶巧克力" },
+      { emoji: "🧋", name: "珍珠奶茶" },
+      { emoji: "🍿", name: "奶油爆米花" },
+      { emoji: "🍭", name: "七彩棒棒糖" },
+      { emoji: "🐼", name: "功夫小熊猫" },
+      { emoji: "🦖", name: "跳舞小恐龙" },
+      { emoji: "🦄", name: "彩虹独角兽" },
+      { emoji: "🐶", name: "汪汪小奶狗" },
+      { emoji: "🐱", name: "招财小猫咪" },
+      { emoji: "🐸", name: "大眼萌青蛙" },
+      { emoji: "🦊", name: "聪明小狐狸" },
+      { emoji: "🐧", name: "摇摆小企鹅" },
+      { emoji: "🤪", name: "鬼脸小淘气" },
+      { emoji: "🥳", name: "派对小寿星" }
+    ];
+
+    // =========================================================================
+    // 3. 游戏全局状态与 Bahasa Baku 标准发音检测
+    // =========================================================================
+    const QUESTION_TIME_LIMIT = 12.0; // 每题限时 12 秒
+    let levels = [];                  // 6 关，每关 10 题
+    let currentLevelIdx = 0;          // 0 ~ 5
+    let currentLevelQueue = [];       // 当前关卡剩余待答题目队列
+    let currentQuestion = null;       // 当前正在作答的题目对象
+    let levelSolvedCount = 0;         // 本关已答对题数 (0 ~ 10)
+    let totalSolvedCount = 0;         // 总共已答对题数 (0 ~ 60)
+    let lives = 6;                    // 6 条共用生命
+    let streak = 0;                   // 连续答对次数
+    let earnedRewards = [];           // 已获得的零食与表情奖励
+    let timerInterval = null;         // 倒计时定时器
+    let timeLeft = QUESTION_TIME_LIMIT;
+    let isAnswering = false;          // 防止重复点击
+    let bahasaBakuVoice = null;       // 原生马来西亚马来语 (ms-MY) 语音对象
+    let currentHintWordObj = null;    // 5连胜提示框当前选中的字
+
+    // 严格检测设备是否拥有原生马来西亚马来语 (ms-MY / Bahasa Baku) 发音库
+    // 如果没有真正的 ms-MY 语音包，绝不使用英语/中文语音乱读，宁可不发音！
+    function detectBahasaBakuVoice() {
+      if (!('speechSynthesis' in window)) {
+        bahasaBakuVoice = null;
+        updateVoiceBanner();
+        return;
+      }
+      const voices = window.speechSynthesis.getVoices();
+      // 优先匹配 ms-MY，其次匹配纯粹的 ms（排除其他语言）
+      bahasaBakuVoice =
+        voices.find(v => v.lang && v.lang.toLowerCase() === 'ms-my') ||
+        voices.find(v => v.lang && v.lang.toLowerCase().startsWith('ms-')) ||
+        voices.find(v => v.lang && v.lang.toLowerCase() === 'ms') ||
+        null;
+
+      updateVoiceBanner();
+    }
+
+    function updateVoiceBanner() {
+      const banner = document.getElementById('voiceStatusBanner');
+      if (!banner) return;
+      if (bahasaBakuVoice) {
+        banner.className = "mb-6 text-xs sm:text-sm font-bold px-4 py-2 rounded-2xl inline-flex items-center gap-2 bg-emerald-100 text-emerald-800 border border-emerald-300";
+        banner.innerHTML = `<span>🔊 已启用标准 Bahasa Baku (${bahasaBakuVoice.lang}) 语音朗读！</span>`;
+      } else {
+        banner.className = "mb-6 text-xs sm:text-sm font-bold px-4 py-2 rounded-2xl inline-flex items-center gap-2 bg-amber-100 text-amber-800 border border-amber-300";
+        banner.innerHTML = `<span>🔇 当前设备未安装标准马来语语音包，已自动静音以防读音误导</span>`;
+      }
+    }
+
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = detectBahasaBakuVoice;
+    }
+    window.addEventListener('load', detectBahasaBakuVoice);
+
+    function speakMalayText(text) {
+      // 严格守护：没有标准 Bahasa Baku 语音包时绝不发声
+      if (!bahasaBakuVoice || !('speechSynthesis' in window)) return;
+      try {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.voice = bahasaBakuVoice;
+        utter.lang = 'ms-MY';
+        utter.rate = 0.88; // 适合二年级小朋友听清每个音节的语速
+        utter.pitch = 1.05;
+        window.speechSynthesis.speak(utter);
+      } catch (e) {
+        // 静默处理异常
+      }
+    }
+
+    function speakCurrentWord() {
+      if (currentQuestion) {
+        speakMalayText(currentQuestion.malay);
+      }
+    }
+
+    function speakHintWord() {
+      if (currentHintWordObj) {
+        speakMalayText(currentHintWordObj.malay);
+      }
+    }
+
+    // =========================================================================
+    // 4. Web Audio API 合成欢快音效 + 紧张又好玩的萌趣冒险背景音乐 (BGM)
+    // =========================================================================
+    let audioCtx = null;
+    let isBgmEnabled = true;
+    let isBgmPlaying = false;
+    let bgmStep = 0;
+    let bgmTimer = null;
+    let isUrgentTempo = false; // 剩余时间 <= 4秒 时自动切换为紧张加速模式！
+
+    // C大调轻快跳跃的儿童冒险旋律（主音 + 低音弹跳伴奏，循环32拍）
+    const BGM_MELODY = [
+      // 小节 1: 阳光出发
+      { note: 523.25, bass: 130.81 }, // C5 + C3
+      { note: 0,      bass: 196.00 }, // 休止 + G3
+      { note: 659.25, bass: 130.81 }, // E5 + C3
+      { note: 783.99, bass: 196.00 }, // G5 + G3
+      { note: 659.25, bass: 130.81 }, // E5 + C3
+      { note: 523.25, bass: 196.00 }, // C5 + G3
+      { note: 587.33, bass: 146.83 }, // D5 + D3
+      { note: 659.25, bass: 220.00 }, // E5 + A3
+
+      // 小节 2: 俏皮探险
+      { note: 698.46, bass: 174.61 }, // F5 + F3
+      { note: 0,      bass: 261.63 }, // 休止 + C4
+      { note: 880.00, bass: 174.61 }, // A5 + F3
+      { note: 783.99, bass: 261.63 }, // G5 + C4
+      { note: 659.25, bass: 130.81 }, // E5 + C3
+      { note: 523.25, bass: 196.00 }, // C5 + G3
+      { note: 587.33, bass: 196.00 }, // D5 + G3
+      { note: 0,      bass: 246.94 }, // 休止 + B3
+
+      // 小节 3: 神秘紧张小转折（制造刺激感）
+      { note: 659.25, bass: 164.81 }, // E5 + E3
+      { note: 622.25, bass: 246.94 }, // D#5 + B3
+      { note: 659.25, bass: 164.81 }, // E5 + E3
+      { note: 783.99, bass: 246.94 }, // G5 + B3
+      { note: 880.00, bass: 220.00 }, // A5 + A3
+      { note: 783.99, bass: 164.81 }, // G5 + E3
+      { note: 659.25, bass: 220.00 }, // E5 + A3
+      { note: 587.33, bass: 146.83 }, // D5 + D3
+
+      // 小节 4: 冲刺加油
+      { note: 523.25, bass: 130.81 }, // C5 + C3
+      { note: 587.33, bass: 196.00 }, // D5 + G3
+      { note: 659.25, bass: 130.81 }, // E5 + C3
+      { note: 783.99, bass: 196.00 }, // G5 + G3
+      { note: 1046.5, bass: 130.81 }, // C6 + C3
+      { note: 0,      bass: 196.00 }, // 休止 + G3
+      { note: 783.99, bass: 196.00 }, // G5 + G3
+      { note: 0,      bass: 130.81 }  // 休止 + C3
+    ];
+
+    function ensureAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playBgmTick() {
+      if (!isBgmEnabled || !isBgmPlaying) return;
+      ensureAudioContext();
+
+      const stepData = BGM_MELODY[bgmStep % BGM_MELODY.length];
+      const now = audioCtx.currentTime;
+      // 紧急状态下（最后4秒）音高微升半音，制造心跳加速的紧张刺激感！
+      const pitchMultiplier = isUrgentTempo ? 1.05946 : 1.0;
+
+      // 1. 弹跳低音伴奏 (营造紧凑冒险节奏)
+      if (stepData.bass > 0) {
+        const bassOsc = audioCtx.createOscillator();
+        const bassGain = audioCtx.createGain();
+        bassOsc.type = 'triangle';
+        bassOsc.frequency.setValueAtTime(stepData.bass * pitchMultiplier, now);
+
+        bassGain.gain.setValueAtTime(0.055, now);
+        bassGain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+
+        bassOsc.connect(bassGain);
+        bassGain.connect(audioCtx.destination);
+        bassOsc.start(now);
+        bassOsc.stop(now + 0.15);
+      }
+
+      // 2. 清脆俏皮的马林巴/八音盒主旋律
+      if (stepData.note > 0) {
+        const leadOsc = audioCtx.createOscillator();
+        const leadGain = audioCtx.createGain();
+        leadOsc.type = 'sine';
+        leadOsc.frequency.setValueAtTime(stepData.note * pitchMultiplier, now);
+
+        leadGain.gain.setValueAtTime(0.075, now);
+        leadGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+        leadOsc.connect(leadGain);
+        leadGain.connect(audioCtx.destination);
+        leadOsc.start(now);
+        leadOsc.stop(now + 0.19);
+      }
+
+      bgmStep++;
+      // 正常速度：每拍 210ms（轻快活泼）；最后4秒紧急加速：每拍 145ms（紧张刺激！）
+      const nextInterval = isUrgentTempo ? 145 : 210;
+      bgmTimer = setTimeout(playBgmTick, nextInterval);
+    }
+
+    function startBgm() {
+      if (!isBgmEnabled || isBgmPlaying) return;
+      isBgmPlaying = true;
+      playBgmTick();
+    }
+
+    function stopBgm() {
+      isBgmPlaying = false;
+      clearTimeout(bgmTimer);
+    }
+
+    function toggleBgm() {
+      isBgmEnabled = !isBgmEnabled;
+      updateBgmButtonsUI();
+      if (isBgmEnabled) {
+        ensureAudioContext();
+        // 如果正在答题界面中，立刻恢复背景音乐
+        if (!document.getElementById('quizScreen').classList.contains('hidden')) {
+          startBgm();
+        }
+      } else {
+        stopBgm();
+      }
+    }
+
+    function updateBgmButtonsUI() {
+      const topIcon = document.getElementById('bgmIcon');
+      const topLabel = document.getElementById('bgmLabel');
+      const startIcon = document.getElementById('startBgmIcon');
+      const startText = document.getElementById('startBgmText');
+
+      if (isBgmEnabled) {
+        if (topIcon) topIcon.textContent = '🎵';
+        if (topLabel) topLabel.textContent = '音乐开';
+        if (startIcon) startIcon.textContent = '🎵';
+        if (startText) startText.textContent = '冒险背景音乐：开启';
+      } else {
+        if (topIcon) topIcon.textContent = '🔇';
+        if (topLabel) topLabel.textContent = '已静音';
+        if (startIcon) startIcon.textContent = '🔇';
+        if (startText) startText.textContent = '冒险背景音乐：关闭';
+      }
+    }
+
+    function playSoundEffect(type) {
+      try {
+        ensureAudioContext();
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        if (type === 'correct') {
+          // 清脆悦耳的双音上升叮咚声
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(523.25, now);       // C5
+          osc.frequency.setValueAtTime(659.25, now + 0.09); // E5
+          osc.frequency.setValueAtTime(783.99, now + 0.18); // G5
+          gain.gain.setValueAtTime(0.22, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.38);
+          osc.start(now);
+          osc.stop(now + 0.38);
+        } else if (type === 'wrong') {
+          // 柔和的低音提示声
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.linearRampToValueAtTime(165, now + 0.28);
+          gain.gain.setValueAtTime(0.16, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.32);
+          osc.start(now);
+          osc.stop(now + 0.32);
+        } else if (type === 'bonus') {
+          // 5连胜魔法提示号角声
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523.25, now);
+          osc.frequency.setValueAtTime(659.25, now + 0.08);
+          osc.frequency.setValueAtTime(783.99, now + 0.16);
+          osc.frequency.setValueAtTime(1046.5, now + 0.24);
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.55);
+          osc.start(now);
+          osc.stop(now + 0.55);
+        }
+      } catch (e) {
+        // 忽略音频限制
+      }
+    }
+
+    // =========================================================================
+    // 5. 工具函数：洗牌算法 & 界面切换
+    // =========================================================================
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function showOnlySection(sectionId) {
+      const sections = ['startScreen', 'quizScreen', 'levelCompleteScreen', 'gameOverScreen', 'victoryScreen'];
+      sections.forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+      });
+      document.getElementById(sectionId).classList.remove('hidden');
+
+      const header = document.getElementById('gameHeader');
+      if (sectionId === 'quizScreen') {
+        header.classList.remove('hidden');
+      } else {
+        header.classList.add('hidden');
+      }
+    }
+
+    // =========================================================================
+    // 6. 初始化新游戏 & 关卡加载
+    // =========================================================================
+    function startNewGame() {
+      // 再次检测语音，确保最新状态
+      detectBahasaBakuVoice();
+      ensureAudioContext();
+      bgmStep = 0;
+      isUrgentTempo = false;
+      startBgm();
+
+      // 将全部 60 个生字彻底随机洗牌，分成 6 关，每关 10 题
+      const shuffledAll = shuffleArray(VOCAB_DATA).map(item => ({
+        ...item,
+        isRetry: false
+      }));
+
+      levels = [];
+      for (let i = 0; i < 6; i++) {
+        levels.push(shuffledAll.slice(i * 10, (i + 1) * 10));
+      }
+
+      currentLevelIdx = 0;
+      lives = 6;
+      streak = 0;
+      totalSolvedCount = 0;
+      earnedRewards = [];
+
+      renderRewardBag();
+      loadLevel(0);
+    }
+
+    function loadLevel(levelIndex) {
+      currentLevelIdx = levelIndex;
+      currentLevelQueue = shuffleArray(levels[levelIndex]);
+      levelSolvedCount = 0;
+
+      updateHeaderUI();
+      showOnlySection('quizScreen');
+      loadNextQuestion();
+    }
+
+    function startNextLevel() {
+      if (currentLevelIdx + 1 < 6) {
+        loadLevel(currentLevelIdx + 1);
+      } else {
+        showVictoryScreen();
+      }
+    }
+
+    // =========================================================================
+    // 7. 顶部状态栏 UI 刷新（关卡、6条生命、5连胜进度）
+    // =========================================================================
+    function updateHeaderUI() {
+      document.getElementById('levelNum').textContent = currentLevelIdx + 1;
+      document.getElementById('levelProgressText').textContent = levelSolvedCount;
+      document.getElementById('totalMasteredText').textContent = totalSolvedCount;
+
+      // 渲染 6 颗爱心
+      const heartsContainer = document.getElementById('heartsContainer');
+      heartsContainer.innerHTML = '';
+      for (let i = 0; i < 6; i++) {
+        const span = document.createElement('span');
+        if (i < lives) {
+          span.textContent = '❤️';
+          span.className = 'inline-block transition-transform duration-300';
+        } else {
+          span.textContent = '🖤';
+          span.className = 'inline-block opacity-35 scale-90';
+        }
+        heartsContainer.appendChild(span);
+      }
+
+      // 渲染连胜点数 (0~5)
+      document.getElementById('streakNum').textContent = streak;
+      const dots = document.getElementById('streakDots').children;
+      for (let i = 0; i < 5; i++) {
+        if (i < streak) {
+          dots[i].className = 'w-2.5 h-2.5 rounded-full bg-purple-600 scale-110 transition-all';
+        } else {
+          dots[i].className = 'w-2.5 h-2.5 rounded-full bg-purple-200 transition-all';
+        }
+      }
+
+      // 更新 6 关小地图进度条
+      for (let s = 1; s <= 6; s++) {
+        const badge = document.getElementById(`stageBadge${s}`);
+        if (s - 1 < currentLevelIdx) {
+          badge.className = 'h-2.5 rounded-full bg-emerald-400 transition-all';
+        } else if (s - 1 === currentLevelIdx) {
+          badge.className = 'h-2.5 rounded-full bg-amber-400 animate-pulse transition-all';
+        } else {
+          badge.className = 'h-2.5 rounded-full bg-slate-200 transition-all';
+        }
+      }
+    }
+
+    // =========================================================================
+    // 8. 出题与 12 秒倒计时逻辑
+    // =========================================================================
+    function loadNextQuestion() {
+      clearInterval(timerInterval);
+      isUrgentTempo = false;
+      if (isBgmEnabled && !isBgmPlaying) {
+        startBgm();
+      }
+
+      // 检查当前关卡是否已经全部答对 10 题
+      if (currentLevelQueue.length === 0) {
+        stopBgm();
+        if (currentLevelIdx === 5) {
+          showVictoryScreen();
+        } else {
+          document.getElementById('completedLevelNum').textContent = currentLevelIdx + 1;
+          document.getElementById('totalSolvedSoFar').textContent = totalSolvedCount;
+          document.getElementById('nextLevelBtnNum').textContent = currentLevelIdx + 2;
+          document.getElementById('levelClearHearts').textContent = '❤️'.repeat(lives) + '🖤'.repeat(6 - lives);
+          showOnlySection('levelCompleteScreen');
+        }
+        return;
+      }
+
+      // 取出队列第一题
+      currentQuestion = currentLevelQueue.shift();
+      isAnswering = true;
+
+      // 隐藏解释面板
+      document.getElementById('explanationBox').classList.add('hidden');
+
+      // 隐藏解释面板与答对后的发音按钮（防止剧透）
+      document.getElementById('explanationBox').classList.add('hidden');
+      const correctAudioWrapper = document.getElementById('correctAudioWrapper');
+      correctAudioWrapper.classList.add('hidden');
+      correctAudioWrapper.classList.remove('flex');
+
+      // 显示题目信息（华语意思出题）
+      document.getElementById('wordIndexTag').textContent = `笔记本第 #${currentQuestion.id} 词`;
+      const retryTag = document.getElementById('retryTag');
+      if (currentQuestion.isRetry) {
+        retryTag.classList.remove('hidden');
+      } else {
+        retryTag.classList.add('hidden');
+      }
+
+      document.getElementById('chinesePromptDisplay').textContent = currentQuestion.chinese;
+
+      // 生成 4 个马来文生字选项（1个正确答案 + 3个干扰项）
+      // 特别过滤：排除与当前题中文意思相同的词（例如 #29 mak cik 和 #33 ibu saudara 都是“阿姨，姑姑”），避免多选题歧义！
+      const distractors = shuffleArray(
+        VOCAB_DATA.filter(w =>
+          w.id !== currentQuestion.id &&
+          w.chinese !== currentQuestion.chinese &&
+          w.malay !== currentQuestion.malay
+        )
+      ).slice(0, 3);
+
+      const options = shuffleArray([currentQuestion, ...distractors]);
+      const optionsGrid = document.getElementById('optionsGrid');
+      optionsGrid.innerHTML = '';
+
+      const optionLabels = ['A', 'B', 'C', 'D'];
+      options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = "btn-3d w-full bg-white hover:bg-sky-50 border-3 border-slate-200 hover:border-sky-400 rounded-2xl p-3.5 sm:p-4 text-left flex items-center gap-3 transition-all cursor-pointer";
+        btn.dataset.wordId = opt.id;
+        btn.innerHTML = `
+          <span class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-sky-100 text-sky-700 font-black flex items-center justify-center shrink-0 text-sm sm:text-base">
+            ${optionLabels[idx]}
+          </span>
+          <span class="font-extrabold text-slate-800 text-base sm:text-xl leading-snug break-words">
+            ${opt.malay}
+          </span>
+        `;
+        btn.onclick = () => handleOptionSelect(opt, btn);
+        optionsGrid.appendChild(btn);
+      });
+
+      // 启动 12 秒倒计时
+      startQuestionTimer();
+    }
+
+    function startQuestionTimer() {
+      clearInterval(timerInterval);
+      timeLeft = QUESTION_TIME_LIMIT;
+      updateTimerVisuals();
+
+      timerInterval = setInterval(() => {
+        if (!isAnswering) {
+          clearInterval(timerInterval);
+          return;
+        }
+        timeLeft = Math.max(0, timeLeft - 0.1);
+        updateTimerVisuals();
+
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          handleTimeout();
+        }
+      }, 100);
+    }
+
+    function updateTimerVisuals() {
+      const timerText = document.getElementById('timerText');
+      const timerBar = document.getElementById('timerBar');
+      const pct = (timeLeft / QUESTION_TIME_LIMIT) * 100;
+
+      timerText.textContent = `${timeLeft.toFixed(1)} 秒`;
+      timerBar.style.width = `${pct}%`;
+
+      if (timeLeft > 6) {
+        isUrgentTempo = false;
+        timerText.className = "text-emerald-600 text-base sm:text-lg font-black";
+        timerBar.className = "h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full transition-all duration-100";
+      } else if (timeLeft > 4) {
+        isUrgentTempo = false;
+        timerText.className = "text-amber-600 text-base sm:text-lg font-black";
+        timerBar.className = "h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full transition-all duration-100";
+      } else {
+        // 剩余 <= 4 秒时，背景音乐自动升调并加速，制造紧张刺激感！
+        isUrgentTempo = true;
+        timerText.className = "text-rose-600 text-base sm:text-lg font-black animate-pulse-fast";
+        timerBar.className = "h-full bg-gradient-to-r from-rose-500 to-red-600 rounded-full transition-all duration-100";
+      }
+    }
+
+    // =========================================================================
+    // 9. 处理作答（答对 / 答错 / 超时）
+    // =========================================================================
+    function handleOptionSelect(selectedOpt, clickedBtn) {
+      if (!isAnswering) return;
+      isAnswering = false;
+      isUrgentTempo = false;
+      clearInterval(timerInterval);
+
+      const allButtons = document.getElementById('optionsGrid').querySelectorAll('button');
+      allButtons.forEach(b => b.disabled = true);
+
+      if (selectedOpt.id === currentQuestion.id) {
+        // ✅ 回答正确！
+        clickedBtn.className = "btn-3d w-full bg-emerald-500 border-3 border-emerald-600 text-white rounded-2xl p-3.5 sm:p-4 text-left flex items-center gap-3 scale-[1.02] transition-all";
+        clickedBtn.querySelector('span:first-child').className = "w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white text-emerald-600 font-black flex items-center justify-center shrink-0";
+        clickedBtn.querySelector('span:last-child').className = "font-black text-white text-base sm:text-xl leading-snug break-words";
+
+        playSoundEffect('correct');
+
+        // 如果设备支持标准 Bahasa Baku，答对后显示发音按钮并自动朗读一遍加强记忆
+        if (bahasaBakuVoice) {
+          const correctAudioWrapper = document.getElementById('correctAudioWrapper');
+          document.getElementById('correctAudioWordLabel').textContent = currentQuestion.malay;
+          correctAudioWrapper.classList.remove('hidden');
+          correctAudioWrapper.classList.add('flex');
+          setTimeout(() => speakCurrentWord(), 220);
+        }
+
+        levelSolvedCount++;
+        totalSolvedCount++;
+        streak++;
+
+        // 发放随机零食或可爱萌宠奖励
+        grantRandomReward();
+        updateHeaderUI();
+
+        // 检查是否达成【连续答对 5 题】魔法提示特权！
+        // 且必须还有尚未回答的生字可供选择
+        const unansweredPool = getAllUnansweredWords();
+        if (streak > 0 && streak % 5 === 0 && unansweredPool.length > 0) {
+          setTimeout(() => {
+            openStreakBonusModal(unansweredPool);
+          }, 950);
+        } else {
+          setTimeout(() => {
+            loadNextQuestion();
+          }, 1150);
+        }
+
+      } else {
+        // ❌ 回答错误！
+        clickedBtn.className = "w-full bg-rose-500 border-3 border-rose-600 text-white rounded-2xl p-3.5 sm:p-4 text-left flex items-center gap-3 animate-shake";
+        clickedBtn.querySelector('span:first-child').className = "w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white text-rose-600 font-black flex items-center justify-center shrink-0";
+        clickedBtn.querySelector('span:last-child').className = "font-black text-white text-base sm:text-xl leading-snug break-words";
+
+        // 高亮显示正确答案按钮
+        allButtons.forEach(b => {
+          if (Number(b.dataset.wordId) === currentQuestion.id) {
+            b.className = "w-full bg-emerald-100 border-3 border-emerald-500 text-emerald-900 rounded-2xl p-3.5 sm:p-4 text-left flex items-center gap-3";
+          }
+        });
+
+        processMistake("答错啦 (-1 ❤️)");
+      }
+    }
+
+    function handleTimeout() {
+      if (!isAnswering) return;
+      isAnswering = false;
+
+      const allButtons = document.getElementById('optionsGrid').querySelectorAll('button');
+      allButtons.forEach(b => {
+        b.disabled = true;
+        if (Number(b.dataset.wordId) === currentQuestion.id) {
+          b.className = "w-full bg-emerald-100 border-3 border-emerald-500 text-emerald-900 rounded-2xl p-3.5 sm:p-4 text-left flex items-center gap-3";
+        }
+      });
+
+      processMistake("时间到啦 (-1 ❤️)");
+    }
+
+    function processMistake(badgeLabel) {
+      isUrgentTempo = false;
+      playSoundEffect('wrong');
+      lives = Math.max(0, lives - 1);
+      streak = 0; // 答错清零连胜
+      updateHeaderUI();
+
+      // 关键规则：不能让学生错了那一题就马上回到同一题回答！
+      // 将错题标记为 isRetry，并插入到当前关卡剩余队列的较后位置（至少隔开 1~2 题，除非本关只剩这一题）
+      const retryWord = { ...currentQuestion, isRetry: true };
+      if (currentLevelQueue.length === 0) {
+        currentLevelQueue.push(retryWord);
+      } else {
+        const minInsertIdx = Math.min(2, currentLevelQueue.length);
+        const insertIdx = minInsertIdx + Math.floor(Math.random() * (currentLevelQueue.length - minInsertIdx + 1));
+        currentLevelQueue.splice(insertIdx, 0, retryWord);
+      }
+
+      // 显示记忆解释面板（告知华语对应的正确马来文生字与记忆口诀）
+      document.getElementById('wrongStatusBadge').textContent = badgeLabel;
+      document.getElementById('expChinese').textContent = currentQuestion.chinese;
+      document.getElementById('expMalay').textContent = currentQuestion.malay;
+      document.getElementById('expDetail').textContent = currentQuestion.tip;
+
+      // 仅当设备有标准 Bahasa Baku 发音时才显示发音按钮
+      const expSpeakBtn = document.getElementById('expSpeakBtn');
+      if (bahasaBakuVoice) {
+        expSpeakBtn.classList.remove('hidden');
+        expSpeakBtn.classList.add('inline-flex');
+      } else {
+        expSpeakBtn.classList.add('hidden');
+        expSpeakBtn.classList.remove('inline-flex');
+      }
+
+      document.getElementById('explanationBox').classList.remove('hidden');
+    }
+
+    function proceedAfterWrong() {
+      // 检查是否 6 条生命全部耗尽
+      if (lives <= 0) {
+        stopBgm();
+        document.getElementById('failLevelNum').textContent = currentLevelIdx + 1;
+        document.getElementById('failSolvedCount').textContent = totalSolvedCount;
+        document.getElementById('failRewardCount').textContent = earnedRewards.length;
+        showOnlySection('gameOverScreen');
+        return;
+      }
+      loadNextQuestion();
+    }
+
+    // =========================================================================
+    // 10. 答对小奖励系统（零食 & 可爱/搞笑 Emoji）
+    // =========================================================================
+    function grantRandomReward() {
+      const reward = MINI_REWARDS[Math.floor(Math.random() * MINI_REWARDS.length)];
+      earnedRewards.push(reward);
+      renderRewardBag();
+
+      // 显示顶部奖励飘窗
+      const toast = document.getElementById('rewardToast');
+      document.getElementById('toastEmoji').textContent = reward.emoji;
+      document.getElementById('toastName').textContent = `${reward.name} +1`;
+
+      toast.classList.remove('hidden');
+      clearTimeout(toast._hideTimer);
+      toast._hideTimer = setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 1500);
+    }
+
+    function renderRewardBag() {
+      const bag = document.getElementById('rewardBag');
+      document.getElementById('rewardCountBadge').textContent = `${earnedRewards.length} 个`;
+
+      if (earnedRewards.length === 0) {
+        bag.innerHTML = `<span class="text-xs text-slate-400 italic">答对第一题就能获得美味小零食或可爱表情奖励哦！✨</span>`;
+        return;
+      }
+
+      bag.innerHTML = '';
+      // 最新获得的显示在最前面
+      [...earnedRewards].reverse().forEach(item => {
+        const chip = document.createElement('div');
+        chip.className = "shrink-0 bg-amber-50 border border-amber-200 rounded-xl px-2.5 py-1 flex items-center gap-1 shadow-xs";
+        chip.title = item.name;
+        chip.innerHTML = `<span class="text-lg sm:text-xl">${item.emoji}</span><span class="text-xs font-bold text-slate-700">${item.name}</span>`;
+        bag.appendChild(chip);
+      });
+    }
+
+    // =========================================================================
+    // 11. 连续答对 5 题【魔法提示特权】逻辑
+    //     核心要求：
+    //     - 让用户在【还未回答】的生字中任选 1 个不太熟悉的字，给出相应提示
+    //     - 给过提示的字，不该在阅读完提示、继续游戏时【马上出现】！
+    // =========================================================================
+    function getAllUnansweredWords() {
+      // 收集当前关卡剩余队列 + 后续未开启关卡中的所有生字
+      const upcomingLevelsWords = [];
+      for (let i = currentLevelIdx + 1; i < levels.length; i++) {
+        upcomingLevelsWords.push(...levels[i]);
+      }
+      return [...currentLevelQueue, ...upcomingLevelsWords];
+    }
+
+    function openStreakBonusModal(unansweredPool) {
+      playSoundEffect('bonus');
+      currentHintWordObj = null;
+
+      const modal = document.getElementById('streakBonusModal');
+      const grid = document.getElementById('unansweredPickerGrid');
+      const revealCard = document.getElementById('hintRevealCard');
+      const closeBtn = document.getElementById('closeBonusBtn');
+      const subtitle = document.getElementById('bonusSubtitle');
+
+      grid.classList.remove('hidden');
+      revealCard.classList.add('hidden');
+      closeBtn.classList.add('hidden');
+      subtitle.innerHTML = `太厉害了！请从下面 <b>${unansweredPool.length} 个还没考过的华语题目</b>中，挑 <b>1 个</b>你不太会拼写的词，神灯会悄悄告诉你它的马来文！`;
+
+      // 按题号顺序展示未回答的华语题目，方便小朋友挑选不会翻译的词
+      const sortedPool = [...unansweredPool].sort((a, b) => a.id - b.id);
+      grid.innerHTML = '';
+
+      sortedPool.forEach(wordObj => {
+        const btn = document.createElement('button');
+        btn.className = "btn-3d bg-white hover:bg-purple-100 border-2 border-purple-200 hover:border-purple-500 rounded-xl p-2.5 text-left transition-all cursor-pointer flex items-center justify-between gap-1";
+        btn.innerHTML = `
+          <span class="font-bold text-slate-800 text-xs sm:text-sm truncate">${wordObj.chinese}</span>
+          <span class="text-[10px] font-bold text-purple-500 shrink-0">#${wordObj.id}</span>
+        `;
+        btn.onclick = () => selectWordForHint(wordObj);
+        grid.appendChild(btn);
+      });
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function selectWordForHint(chosenWord) {
+      currentHintWordObj = chosenWord;
+
+      // 1. 确保该生字不会在关闭提示后【马上出现】！
+      // 检查它是否在 currentLevelQueue 的最前面（索引 0 或 1）
+      const idxInCurrent = currentLevelQueue.findIndex(w => w.id === chosenWord.id);
+      if (idxInCurrent !== -1) {
+        // 如果当前关卡队列还有其他题目，把它移动到队列较靠后的位置（至少延后 2~3 题）
+        if (currentLevelQueue.length > 1) {
+          const [removed] = currentLevelQueue.splice(idxInCurrent, 1);
+          const safeIndex = Math.min(currentLevelQueue.length, Math.max(2, Math.floor(currentLevelQueue.length * 0.7)));
+          currentLevelQueue.splice(safeIndex, 0, removed);
+        } else if (currentLevelIdx + 1 < levels.length) {
+          // 极端情况：当前关只剩这最后 1 题了，为了让它不“马上出现”，我们把它与下一关的一道题对调！
+          const nextLvl = levels[currentLevelIdx + 1];
+          if (nextLvl && nextLvl.length > 0) {
+            const swapIdx = Math.floor(Math.random() * nextLvl.length);
+            const temp = currentLevelQueue[0];
+            currentLevelQueue[0] = nextLvl[swapIdx];
+            nextLvl[swapIdx] = temp;
+          }
+        }
+      } else {
+        // 如果它在后续关卡中，确保它不在下一关的第 1 顺位
+        for (let lvlIdx = currentLevelIdx + 1; lvlIdx < levels.length; lvlIdx++) {
+          const idxInFuture = levels[lvlIdx].findIndex(w => w.id === chosenWord.id);
+          if (idxInFuture !== -1 && levels[lvlIdx].length > 1) {
+            const [removed] = levels[lvlIdx].splice(idxInFuture, 1);
+            levels[lvlIdx].push(removed); // 放到该关最后面
+            break;
+          }
+        }
+      }
+
+      // 2. 展示神灯提示内容（揭晓该华语意思对应的马来文生字与口诀）
+      document.getElementById('unansweredPickerGrid').classList.add('hidden');
+      document.getElementById('bonusSubtitle').textContent = "🌟 魔法提示已解锁，快把马来文生字记在心里吧！";
+
+      document.getElementById('hintChineseTitle').textContent = chosenWord.chinese;
+      document.getElementById('hintMalayAnswer').textContent = chosenWord.malay;
+      document.getElementById('hintMemoryTip').textContent = `💡 记忆小口诀：${chosenWord.tip}`;
+
+      const hintSpeakWrapper = document.getElementById('hintSpeakWrapper');
+      if (bahasaBakuVoice) {
+        hintSpeakWrapper.classList.remove('hidden');
+        hintSpeakWrapper.classList.add('flex');
+      } else {
+        hintSpeakWrapper.classList.add('hidden');
+        hintSpeakWrapper.classList.remove('flex');
+      }
+
+      document.getElementById('hintRevealCard').classList.remove('hidden');
+      document.getElementById('closeBonusBtn').classList.remove('hidden');
+    }
+
+    function closeStreakBonusModal() {
+      const modal = document.getElementById('streakBonusModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      loadNextQuestion();
+    }
+
+    // =========================================================================
+    // 12. 终极通关界面渲染
+    // =========================================================================
+    function showVictoryScreen() {
+      stopBgm();
+      playSoundEffect('bonus');
+      document.getElementById('finalRewardCount').textContent = earnedRewards.length;
+      const showcase = document.getElementById('finalRewardShowcase');
+      showcase.innerHTML = '';
+
+      earnedRewards.forEach(item => {
+        const badge = document.createElement('span');
+        badge.className = "bg-white border border-amber-200 rounded-xl px-2.5 py-1 text-sm font-bold shadow-xs inline-flex items-center gap-1";
+        badge.innerHTML = `<span class="text-lg">${item.emoji}</span><span>${item.name}</span>`;
+        showcase.appendChild(badge);
+      });
+
+      showOnlySection('victoryScreen');
+    }
+  </script>
+</body>
+</html>
